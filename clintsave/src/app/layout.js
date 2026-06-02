@@ -8,18 +8,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        {/* Umami Analytics Script */}
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
-          <script
-            defer
-            src={`${process.env.NEXT_PUBLIC_UMAMI_URL}/script.js`}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-          />
-        )}
-
-        {children}
-      </body>
+      <body className="bg-[#0a0a0a] text-slate-100">{children}</body>
     </html>
   );
 }

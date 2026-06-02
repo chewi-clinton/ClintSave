@@ -7,7 +7,7 @@ import {
 import { prisma } from "@/lib/db";
 import { generateSessionId, parseUrls } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
-import { notifyBatchComplete } from "@/lib/webhook";
+import { notifyBatchComplete } from "@/lib/webhooks";
 
 const BATCH_SIZE = 5;
 

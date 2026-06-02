@@ -53,6 +53,12 @@ export async function getStats() {
     }),
   ]);
 
+  // Convert BigInt (from Prisma aggregate) to a regular number for JSON serialization
+  const totalFileSizeValue =
+    totalFileSize && totalFileSize._sum && totalFileSize._sum.fileSize
+      ? Number(totalFileSize._sum.fileSize)
+      : 0;
+
   return {
     total: totalDownloads,
     successful: successfulDownloads,
@@ -60,7 +66,7 @@ export async function getStats() {
     today: todayDownloads,
     week: weekDownloads,
     month: monthDownloads,
-    totalFileSize: totalFileSize._sum.fileSize || BigInt(0),
+    totalFileSize: totalFileSizeValue,
     successRate:
       totalDownloads > 0
         ? ((successfulDownloads / totalDownloads) * 100).toFixed(1)
