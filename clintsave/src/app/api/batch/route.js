@@ -1,0 +1,199 @@
+import { NextResponse } from "next/server";
+import {
+  getTikTokVideoInfo,
+  extractVideoUrl,
+  extractMetadata,
+} from "@/lib/tikwm";
+import { prisma } from "@/lib/db";
+import { generateSessionId, parseUrls } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
+import { notifyBatchComplete } from "@/lib/webhook";
+
+const BATCH_SIZE = 5;
+
+export async function POST(request) {
+  let sessionId;
+
+  try {
+    const body = await request.json();
+    const { urls: rawUrls, webhookUrl } = body;
+
+    const urls = Array.isArray(rawUrls) ? rawUrls : parseUrls(rawUrls || "");
+
+    if (urls.length === 0) {
+      return NextResponse.json(
+        { error: "No valid TikTok URLs provided" },
+        { status: 400 },
+      );
+    }
+
+    sessionId = generateSessionId();
+
+    // Create database records
+    const downloads = await Promise.all(
+      urls.map((url) =>
+        prisma.download.create({
+          data: {
+            tiktokUrl: url,
+            status: "pending",
+            sessionId,
+            webhookCallback: webhookUrl || null,
+          },
+        }),
+      ),
+    );
+
+    // Track analytics
+    trackEvent("batch_started", {
+      sessionId,
+      urlCount: urls.length,
+      hasWebhook: !!webhookUrl,
+    });
+
+    // Process asynchronously (don't await)
+    processBatch(
+      downloads.map((d) => ({ id: d.id, url: d.tiktokUrl })),
+      sessionId,
+      webhookUrl,
+    );
+
+    return NextResponse.json({
+      success: true,
+      sessionId,
+      count: urls.length,
+      downloadIds: downloads.map((d) => d.id),
+    });
+  } catch (error) {
+    console.error("Batch processing error:", error);
+
+    trackEvent("batch_error", {
+      error: error.message,
+      sessionId,
+    });
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+async function processBatch(items, sessionId, webhookUrl) {
+  const results = [];
+
+  // Process in batches
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const batch = items.slice(i, i + BATCH_SIZE);
+
+    const batchResults = await Promise.allSettled(
+      batch.map((item) => processVideo(item.id, item.url)),
+    );
+
+    batchResults.forEach((result, index) => {
+      results.push({
+        id: batch[index].id,
+        tiktokUrl: batch[index].url,
+        status: result.status === "fulfilled" ? "done" : "failed",
+        ...(result.value || {}),
+      });
+    });
+  }
+
+  // Send webhook notification if provided
+  if (webhookUrl) {
+    const detailedResults = await Promise.all(
+      results.map(async (r) => {
+        const record = await prisma.download.findUnique({
+          where: { id: r.id },
+        });
+        return record;
+      }),
+    );
+
+    await notifyBatchComplete(sessionId, detailedResults.filter(Boolean));
+  }
+
+  // Track completion
+  trackEvent("batch_completed", {
+    sessionId,
+    totalResults: results.length,
+    successful: results.filter((r) => r.status === "done").length,
+    failed: results.filter((r) => r.status === "failed").length,
+  });
+}
+
+async function processVideo(id, url) {
+  try {
+    // Update to fetching
+    await prisma.download.update({
+      where: { id },
+      data: {
+        status: "fetching",
+        updatedAt: new Date(),
+      },
+    });
+
+    // Fetch from TikWM
+    const response = await getTikTokVideoInfo(url);
+
+    if (response.code !== 0 || !response.data) {
+      throw new Error(response.msg || "Failed to fetch video info");
+    }
+
+    const videoUrl = extractVideoUrl(response);
+    const metadata = extractMetadata(response);
+
+    if (!videoUrl) {
+      throw new Error("No video URL available");
+    }
+
+    // Update with video info
+    await prisma.download.update({
+      where: { id },
+      data: {
+        status: "downloading",
+        videoTitle: metadata.title,
+        creatorName: metadata.creatorName,
+        thumbnailUrl: metadata.thumbnailUrl,
+        videoUrlNoWatermark: videoUrl,
+        duration: metadata.duration,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Mark as done
+    await prisma.download.update({
+      where: { id },
+      data: {
+        status: "done",
+        updatedAt: new Date(),
+      },
+    });
+
+    trackEvent("download_success", { downloadId: id, url });
+
+    return {
+      videoTitle: metadata.title,
+      creatorName: metadata.creatorName,
+    };
+  } catch (error) {
+    console.error(`Error processing video ${id}:`, error);
+
+    await prisma.download.update({
+      where: { id },
+      data: {
+        status: "failed",
+        errorMessage: error.message,
+        updatedAt: new Date(),
+      },
+    });
+
+    trackEvent("download_failed", {
+      downloadId: id,
+      url,
+      error: error.message,
+    });
+
+    throw error;
+  }
+}
