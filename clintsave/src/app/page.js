@@ -152,7 +152,7 @@ export default function Home() {
           </p>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+        <div className="grid gap-8 lg:grid-cols-1">
           <section className="flex flex-col gap-6">
             <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-1 shadow-2xl backdrop-blur-sm transition-all duration-500 hover:border-white/20">
               <textarea
@@ -194,14 +194,6 @@ export default function Home() {
               </div>
             )}
           </section>
-
-          <aside className="flex flex-col gap-4">
-            <MetricCard label="Successful" value={doneCount} />
-            <div className="grid grid-cols-2 gap-4">
-              <MetricCard label="Pending" value={pendingCount} small />
-              <MetricCard label="Failed" value={failedCount} small />
-            </div>
-          </aside>
         </div>
 
         <section className="mt-20">
