@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get("limit")) || 50;
@@ -26,8 +28,13 @@ export async function GET(request) {
       prisma.download.count({ where }),
     ]);
 
+    const safeDownloads = downloads.map((d) => ({
+      ...d,
+      fileSize: d.fileSize != null ? Number(d.fileSize) : null,
+    }));
+
     return NextResponse.json({
-      downloads,
+      downloads: safeDownloads,
       pagination: {
         total,
         limit,
@@ -36,9 +43,8 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("History fetch error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch history" },
+      { error: "Failed to execute historical dataset lookup" },
       { status: 500 },
     );
   }

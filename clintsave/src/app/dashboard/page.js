@@ -4,211 +4,158 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    successful: 0,
+    failed: 0,
+    today: 0,
+    week: 0,
+    successRate: "0.0",
+    totalFileSize: 0,
+  });
   const [recentDownloads, setRecentDownloads] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    async function fetchData() {
+      try {
+        const statsRes = await fetch("/api/stats");
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      try {
+        const historyRes = await fetch("/api/history?limit=20");
+        if (historyRes.ok) {
+          const historyData = await historyRes.json();
+          setRecentDownloads(historyData.downloads || []);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      setIsLoading(false);
+    }
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      const [statsRes, historyRes] = await Promise.all([
-        fetch("/api/stats"),
-        fetch("/api/history?limit=20"),
-      ]);
-
-      const statsData = await statsRes.json();
-      const historyData = await historyRes.json();
-
-      setStats(statsData);
-      setRecentDownloads(historyData.downloads || []);
-    } catch (error) {
-      console.error("Dashboard error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center text-neutral-500 text-sm">
+        <span className="animate-pulse">Loading workspace...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen bg-black text-neutral-100 font-sans">
+      <div className="max-w-5xl mx-auto px-6 py-12 lg:py-20">
         <header className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Statistics</h1>
-            <p className="text-gray-600 mt-1">Download history and metrics</p>
+            <h1 className="text-2xl font-medium tracking-tight text-white">
+              System Analytics
+            </h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              Global metrics and recent activity
+            </p>
           </div>
-
           <Link
             href="/"
-            className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+            className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
           >
-            Back to Downloader
+            ← Back to Application
           </Link>
         </header>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <StatCard label="Total Processed" value={stats.total} />
+          <StatCard label="Successful" value={stats.successful} />
+          <StatCard label="Success Rate" value={`${stats.successRate}%`} />
+          <StatCard label="Failed" value={stats.failed} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+          <StatCard label="Today" value={stats.today} secondary />
+          <StatCard label="This Week" value={stats.week} secondary />
           <StatCard
-            label="Total Downloads"
-            value={stats?.total || 0}
-            subtext="All time"
-          />
-          <StatCard
-            label="Successful"
-            value={stats?.successful || 0}
-            subtext={`${stats?.successRate || 0}% success rate`}
-            highlight="green"
-          />
-          <StatCard
-            label="Today"
-            value={stats?.today || 0}
-            subtext="This day"
-          />
-          <StatCard
-            label="This Month"
-            value={stats?.month || 0}
-            subtext="Current month"
+            label="Data Transfer"
+            value={formatBytes(stats.totalFileSize)}
+            secondary
           />
         </div>
 
-        {/* Additional Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-          <StatCard
-            label="This Week"
-            value={stats?.week || 0}
-            subtext="Last 7 days"
-          />
-          <StatCard
-            label="Failed"
-            value={stats?.failed || 0}
-            subtext="Total failures"
-            highlight="red"
-          />
-          <StatCard
-            label="Total Size"
-            value={formatBytes(Number(stats?.totalFileSize || 0))}
-            subtext="Downloaded data"
-          />
-        </div>
-
-        {/* Recent Downloads Table */}
-        <div className="bg-white rounded border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="font-semibold text-gray-900">Recent Downloads</h2>
-          </div>
-
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Creator
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {recentDownloads.map((download) => (
-                <tr key={download.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={download.status} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 truncate max-w-md">
-                      {download.videoTitle || "N/A"}
-                    </div>
-                    <div className="text-xs text-gray-500 font-mono truncate max-w-md">
-                      {download.tiktokUrl}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {download.creatorName || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(download.createdAt).toLocaleDateString()}
-                  </td>
+        <div>
+          <h2 className="text-sm font-medium text-white mb-4">
+            Recent Executions
+          </h2>
+          <div className="rounded-xl border border-white/10 overflow-hidden bg-white/[0.01]">
+            <table className="w-full text-left text-sm text-neutral-400">
+              <thead className="border-b border-white/10 text-xs">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Status</th>
+                  <th className="px-6 py-4 font-medium">Identifier</th>
+                  <th className="px-6 py-4 font-medium">Creator</th>
+                  <th className="px-6 py-4 font-medium text-right">
+                    Timestamp
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {recentDownloads.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              No downloads yet
-            </div>
-          )}
+              </thead>
+              <tbody className="divide-y divide-white/10">
+                {recentDownloads.map((download) => (
+                  <tr
+                    key={download.id}
+                    className="hover:bg-white/[0.02] transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <span
+                        className={`capitalize ${download.status === "failed" ? "text-red-400" : download.status === "done" ? "text-emerald-400" : "text-neutral-400"}`}
+                      >
+                        {download.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-white truncate max-w-[200px]">
+                        {download.videoTitle || "N/A"}
+                      </div>
+                      <div className="text-[11px] font-mono mt-1 truncate max-w-[200px]">
+                        {download.tiktokUrl}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{download.creatorName || "—"}</td>
+                    <td className="px-6 py-4 text-right font-mono text-[11px]">
+                      {new Date(download.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value, subtext, highlight }) {
-  const colors = {
-    green: "border-l-4 border-l-green-500",
-    red: "border-l-4 border-l-red-500",
-    default: "border-l-4 border-l-gray-300",
-  };
-
-  const valueColors = {
-    green: "text-green-600",
-    red: "text-red-600",
-    default: "text-gray-900",
-  };
-
+function StatCard({ label, value, secondary }) {
   return (
-    <div
-      className={`bg-white rounded border border-gray-200 p-6 ${colors[highlight] || colors.default}`}
-    >
-      <div className="text-sm text-gray-500 mb-1">{label}</div>
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6 transition-all hover:border-white/20">
+      <div className="text-xs text-neutral-500 mb-2">{label}</div>
       <div
-        className={`text-3xl font-bold ${valueColors[highlight] || valueColors.default}`}
+        className={`font-medium text-white ${secondary ? "text-2xl" : "text-3xl tracking-tight"}`}
       >
-        {value.toLocaleString()}
+        {typeof value === "number" ? value.toLocaleString() : value}
       </div>
-      <div className="text-xs text-gray-400 mt-1">{subtext}</div>
     </div>
   );
 }
 
-function StatusBadge({ status }) {
-  const config = {
-    pending: "bg-yellow-100 text-yellow-800",
-    fetching: "bg-blue-100 text-blue-800",
-    downloading: "bg-purple-100 text-purple-800",
-    done: "bg-green-100 text-green-800",
-    failed: "bg-red-100 text-red-800",
-  };
-
-  return (
-    <span
-      className={`inline-flex px-2 py-1 text-xs font-medium rounded ${config[status] || config.pending}`}
-    >
-      {status}
-    </span>
-  );
-}
-
+// Explicit formatting function replaces dependencies
 function formatBytes(bytes) {
-  if (bytes === 0) return "0 B";
+  if (!bytes || bytes === 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

@@ -29,7 +29,6 @@ export async function POST(request) {
 
     sessionId = generateSessionId();
 
-    // Create database records
     const downloads = await Promise.all(
       urls.map((url) =>
         prisma.download.create({
@@ -43,14 +42,12 @@ export async function POST(request) {
       ),
     );
 
-    // Track analytics
     trackEvent("batch_started", {
       sessionId,
       urlCount: urls.length,
       hasWebhook: !!webhookUrl,
     });
 
-    // Process asynchronously (don't await)
     processBatch(
       downloads.map((d) => ({ id: d.id, url: d.tiktokUrl })),
       sessionId,
@@ -64,8 +61,6 @@ export async function POST(request) {
       downloadIds: downloads.map((d) => d.id),
     });
   } catch (error) {
-    console.error("Batch processing error:", error);
-
     trackEvent("batch_error", {
       error: error.message,
       sessionId,
@@ -81,7 +76,6 @@ export async function POST(request) {
 async function processBatch(items, sessionId, webhookUrl) {
   const results = [];
 
-  // Process in batches
   for (let i = 0; i < items.length; i += BATCH_SIZE) {
     const batch = items.slice(i, i + BATCH_SIZE);
 
@@ -99,7 +93,6 @@ async function processBatch(items, sessionId, webhookUrl) {
     });
   }
 
-  // Send webhook notification if provided
   if (webhookUrl) {
     const detailedResults = await Promise.all(
       results.map(async (r) => {
@@ -113,7 +106,6 @@ async function processBatch(items, sessionId, webhookUrl) {
     await notifyBatchComplete(sessionId, detailedResults.filter(Boolean));
   }
 
-  // Track completion
   trackEvent("batch_completed", {
     sessionId,
     totalResults: results.length,
@@ -124,7 +116,6 @@ async function processBatch(items, sessionId, webhookUrl) {
 
 async function processVideo(id, url) {
   try {
-    // Update to fetching
     await prisma.download.update({
       where: { id },
       data: {
@@ -133,7 +124,6 @@ async function processVideo(id, url) {
       },
     });
 
-    // Fetch from TikWM
     const response = await getTikTokVideoInfo(url);
 
     if (response.code !== 0 || !response.data) {
@@ -147,7 +137,6 @@ async function processVideo(id, url) {
       throw new Error("No video URL available");
     }
 
-    // Update with video info
     await prisma.download.update({
       where: { id },
       data: {
@@ -157,11 +146,11 @@ async function processVideo(id, url) {
         thumbnailUrl: metadata.thumbnailUrl,
         videoUrlNoWatermark: videoUrl,
         duration: metadata.duration,
+        fileSize: metadata.size ? BigInt(metadata.size) : null,
         updatedAt: new Date(),
       },
     });
 
-    // Mark as done
     await prisma.download.update({
       where: { id },
       data: {
@@ -177,8 +166,6 @@ async function processVideo(id, url) {
       creatorName: metadata.creatorName,
     };
   } catch (error) {
-    console.error(`Error processing video ${id}:`, error);
-
     await prisma.download.update({
       where: { id },
       data: {

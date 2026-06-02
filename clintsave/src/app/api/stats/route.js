@@ -1,14 +1,35 @@
 import { NextResponse } from "next/server";
-import { getStats } from "@/lib/analytics";
+import { prisma } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const sessionId = searchParams.get("sessionId");
+
   try {
-    const stats = await getStats();
-    return NextResponse.json(stats);
+    let downloads;
+
+    if (sessionId) {
+      downloads = await prisma.download.findMany({
+        where: { sessionId },
+        orderBy: { createdAt: "asc" },
+      });
+    } else {
+      downloads = await prisma.download.findMany({
+        take: 50,
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
+    const safeDownloads = JSON.parse(
+      JSON.stringify(downloads, (key, value) =>
+        typeof value === "bigint" ? Number(value) : value,
+      ),
+    );
+
+    return NextResponse.json({ downloads: safeDownloads });
   } catch (error) {
-    console.error("Stats fetch error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch statistics" },
+      { error: "Failed to fetch engine status parameters" },
       { status: 500 },
     );
   }
