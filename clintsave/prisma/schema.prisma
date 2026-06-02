@@ -1,15 +1,41 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Download {
+  id                    Int       @id @default(autoincrement())
+  tiktokUrl             String    @map("tiktok_url")
+  videoTitle            String?   @map("video_title")
+  creatorName           String?   @map("creator_name")
+  thumbnailUrl          String?   @map("thumbnail_url")
+  videoUrlNoWatermark   String?   @map("video_url_no_watermark")
+  status                String    @default("pending")
+  errorMessage          String?   @map("error_message")
+  fileSize              BigInt?   @map("file_size")
+  duration              Int?
+  sessionId             String?   @map("session_id")
+  webhookCallback       String?   @map("webhook_callback")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("downloads")
+}
+
+model AnalyticsEvent {
+  id        Int      @id @default(autoincrement())
+  eventType String   @map("event_type")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("analytics_events")
 }
