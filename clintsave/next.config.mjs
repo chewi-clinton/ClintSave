@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  // Removed output standalone to avoid server.js packaging issues
 
-  // Fix the workspace root warning
   turbopack: {
-    root: "..",
+    root: process.cwd(),
   },
 
   images: {
