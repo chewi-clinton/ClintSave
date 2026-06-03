@@ -157,10 +157,13 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("session");
   const autoDownloadedIds = useRef(new Set());
+  const downloadQueue = useRef([]);
+  const isDownloading = useRef(false);
 
   const urlCount = useMemo(
     () =>
-      inputValue.split(/[\s,]+/).filter((url) => url.trim().length > 0).length,
+      inputValue.split(/[\s,\n]+/).filter((url) => url.trim().length > 0)
+        .length,
     [inputValue],
   );
 
@@ -168,33 +171,41 @@ export default function Home() {
   const totalCount = downloads.length;
   const progress = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
 
+  function processDownloadQueue() {
+    if (isDownloading.current || downloadQueue.current.length === 0) return;
+
+    isDownloading.current = true;
+    const { downloadUrl, filename } = downloadQueue.current.shift();
+
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Wait before triggering the next one
+    setTimeout(() => {
+      isDownloading.current = false;
+      processDownloadQueue();
+    }, 1500); // 1.5s between each download
+  }
+
   function triggerAutoDownload(download) {
     if (!download.videoUrlNoWatermark) return;
     if (autoDownloadedIds.current.has(download.id)) return;
     autoDownloadedIds.current.add(download.id);
 
-    const filename = encodeURIComponent(
-      `${download.creatorName || "tiktok"}-${download.id}`.replace(
-        /[^a-z0-9\-_]/gi,
-        "_",
-      ),
-    );
-    const downloadUrl = `/api/download?url=${encodeURIComponent(download.videoUrlNoWatermark)}&filename=${filename}`;
+    const filename = `${(download.creatorName || "tiktok").replace(/[^a-z0-9\-_]/gi, "_")}-${download.id}`;
+    const downloadUrl = `/api/download?url=${encodeURIComponent(download.videoUrlNoWatermark)}&filename=${encodeURIComponent(filename)}`;
 
-    const queueIndex = [...autoDownloadedIds.current].indexOf(download.id);
-    setTimeout(() => {
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = `${filename}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }, queueIndex * 800);
+    downloadQueue.current.push({ downloadUrl, filename: `${filename}.mp4` });
+    processDownloadQueue();
   }
 
   const handleSubmit = useCallback(async () => {
     const urls = inputValue
-      .split(/[\s,]+/)
+      .split(/[\s,\n]+/)
       .map((url) => url.trim())
       .filter(
         (url) =>
@@ -247,7 +258,6 @@ export default function Home() {
               const updated = data.downloads.find((d) => d.id === download.id);
               if (!updated) return download;
 
-              // Auto-download the moment status flips to done
               if (updated.status === "done" && download.status !== "done") {
                 triggerAutoDownload(updated);
               }
@@ -274,15 +284,12 @@ export default function Home() {
 
   return (
     <main className="w-full min-h-screen bg-[#0a0510] text-neutral-200 relative z-0 antialiased selection:bg-purple-500/30">
-      {/* Background Soft Lights */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/15 blur-[140px]" />
         <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-900/5 blur-[140px]" />
       </div>
 
-      {/* Global Wrapper */}
       <div className="w-full mx-auto max-w-none px-8 md:px-16 flex flex-col min-h-screen">
-        {/* Header & Navigation */}
         <nav
           className="w-full flex items-center justify-between border-b border-white/[0.04]"
           style={{ paddingTop: "2rem", paddingBottom: "2rem" }}
@@ -321,7 +328,6 @@ export default function Home() {
           </div>
         </nav>
 
-        {/* Hero Section */}
         <div
           className="w-full text-center"
           style={{ marginTop: "7rem", marginBottom: "3.5rem" }}
@@ -337,20 +343,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Interactive Search Box Wrapper */}
         <div className="w-full relative z-10 flex flex-col items-center">
           <div className="w-full max-w-2xl relative">
-            <input
-              type="text"
+            <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              placeholder="Paste video URLs here... (separated by spaces or commas)"
-              className="w-full h-14 px-6 bg-[#0f0a19]/80 border border-purple-500/30 rounded-xl text-xs font-medium text-neutral-200 placeholder:text-neutral-700 outline-none focus:border-purple-500/60 shadow-2xl transition-all"
+              placeholder="Paste video URLs here... (one per line or separated by spaces)"
+              rows={3}
+              className="w-full px-6 py-4 bg-[#0f0a19]/80 border border-purple-500/30 rounded-xl text-xs font-medium text-neutral-200 placeholder:text-neutral-700 outline-none focus:border-purple-500/60 shadow-2xl transition-all resize-none"
               disabled={isProcessing}
             />
             {urlCount > 0 && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono px-2 py-0.5 rounded-md">
+              <span className="absolute right-4 top-3 text-[10px] bg-purple-500/20 border border-purple-500/30 text-purple-300 font-mono px-2 py-0.5 rounded-md">
                 {urlCount} Detected
               </span>
             )}
