@@ -42,11 +42,7 @@ export async function POST(request) {
       ),
     );
 
-    trackEvent("batch_started", {
-      sessionId,
-      urlCount: urls.length,
-      hasWebhook: !!webhookUrl,
-    });
+    await trackEvent("batch_started", { sessionId, urlCount: urls.length });
 
     processBatch(
       downloads.map((d) => ({ id: d.id, url: d.tiktokUrl })),
@@ -61,11 +57,7 @@ export async function POST(request) {
       downloadIds: downloads.map((d) => d.id),
     });
   } catch (error) {
-    trackEvent("batch_error", {
-      error: error.message,
-      sessionId,
-    });
-
+    await trackEvent("batch_error", { error: error.message, sessionId });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -95,18 +87,12 @@ async function processBatch(items, sessionId, webhookUrl) {
 
   if (webhookUrl) {
     const detailedResults = await Promise.all(
-      results.map(async (r) => {
-        const record = await prisma.download.findUnique({
-          where: { id: r.id },
-        });
-        return record;
-      }),
+      results.map((r) => prisma.download.findUnique({ where: { id: r.id } })),
     );
-
     await notifyBatchComplete(sessionId, detailedResults.filter(Boolean));
   }
 
-  trackEvent("batch_completed", {
+  await trackEvent("batch_completed", {
     sessionId,
     totalResults: results.length,
     successful: results.filter((r) => r.status === "done").length,
@@ -118,10 +104,7 @@ async function processVideo(id, url) {
   try {
     await prisma.download.update({
       where: { id },
-      data: {
-        status: "fetching",
-        updatedAt: new Date(),
-      },
+      data: { status: "fetching", updatedAt: new Date() },
     });
 
     const response = await getTikTokVideoInfo(url);
@@ -133,14 +116,12 @@ async function processVideo(id, url) {
     const videoUrl = extractVideoUrl(response);
     const metadata = extractMetadata(response);
 
-    if (!videoUrl) {
-      throw new Error("No video URL available");
-    }
+    if (!videoUrl) throw new Error("No downloadable video URL returned");
 
     await prisma.download.update({
       where: { id },
       data: {
-        status: "downloading",
+        status: "done",
         videoTitle: metadata.title,
         creatorName: metadata.creatorName,
         thumbnailUrl: metadata.thumbnailUrl,
@@ -151,20 +132,8 @@ async function processVideo(id, url) {
       },
     });
 
-    await prisma.download.update({
-      where: { id },
-      data: {
-        status: "done",
-        updatedAt: new Date(),
-      },
-    });
-
-    trackEvent("download_success", { downloadId: id, url });
-
-    return {
-      videoTitle: metadata.title,
-      creatorName: metadata.creatorName,
-    };
+    await trackEvent("download_success", { downloadId: id, url });
+    return { videoTitle: metadata.title, creatorName: metadata.creatorName };
   } catch (error) {
     await prisma.download.update({
       where: { id },
@@ -174,13 +143,11 @@ async function processVideo(id, url) {
         updatedAt: new Date(),
       },
     });
-
-    trackEvent("download_failed", {
+    await trackEvent("download_failed", {
       downloadId: id,
       url,
       error: error.message,
     });
-
     throw error;
   }
 }

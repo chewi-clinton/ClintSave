@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef } from "react";
 
 const tabs = [
   { id: "session", label: "Current Session" },
@@ -156,6 +156,7 @@ export default function Home() {
   const [downloads, setDownloads] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("session");
+  const autoDownloadedIds = useRef(new Set());
 
   const urlCount = useMemo(
     () =>
@@ -166,6 +167,30 @@ export default function Home() {
   const doneCount = downloads.filter((d) => d.status === "done").length;
   const totalCount = downloads.length;
   const progress = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  function triggerAutoDownload(download) {
+    if (!download.videoUrlNoWatermark) return;
+    if (autoDownloadedIds.current.has(download.id)) return;
+    autoDownloadedIds.current.add(download.id);
+
+    const filename = encodeURIComponent(
+      `${download.creatorName || "tiktok"}-${download.id}`.replace(
+        /[^a-z0-9\-_]/gi,
+        "_",
+      ),
+    );
+    const downloadUrl = `/api/download?url=${encodeURIComponent(download.videoUrlNoWatermark)}&filename=${filename}`;
+
+    const queueIndex = [...autoDownloadedIds.current].indexOf(download.id);
+    setTimeout(() => {
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `${filename}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }, queueIndex * 800);
+  }
 
   const handleSubmit = useCallback(async () => {
     const urls = inputValue
@@ -180,6 +205,7 @@ export default function Home() {
     if (urls.length === 0) return alert("Please enter valid TikTok URLs");
 
     setIsProcessing(true);
+    autoDownloadedIds.current = new Set();
 
     try {
       const response = await fetch("/api/batch", {
@@ -219,7 +245,14 @@ export default function Home() {
           setDownloads((prev) =>
             prev.map((download) => {
               const updated = data.downloads.find((d) => d.id === download.id);
-              return updated || download;
+              if (!updated) return download;
+
+              // Auto-download the moment status flips to done
+              if (updated.status === "done" && download.status !== "done") {
+                triggerAutoDownload(updated);
+              }
+
+              return updated;
             }),
           );
 
@@ -238,12 +271,6 @@ export default function Home() {
 
     setTimeout(() => clearInterval(pollInterval), 600000);
   }, []);
-
-  const handleDownload = (download) => {
-    if (!download.videoUrlNoWatermark) return;
-    const filename = `${download.creatorName || "tiktok"}-${download.id}.mp4`;
-    window.location.href = `/api/download?url=${encodeURIComponent(download.videoUrlNoWatermark)}&filename=${encodeURIComponent(filename)}`;
-  };
 
   return (
     <main className="w-full min-h-screen bg-[#0a0510] text-neutral-200 relative z-0 antialiased selection:bg-purple-500/30">
@@ -360,19 +387,6 @@ export default function Home() {
               {isProcessing ? "Processing..." : "Start Download"}
               {!isProcessing && <ArrowRightIcon />}
             </button>
-            <button
-              className="font-bold text-neutral-200 hover:text-white transition-all active:scale-[0.97]"
-              style={{
-                padding: "1.125rem 3rem",
-                borderRadius: "1rem",
-                fontSize: "1rem",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-              }}
-            >
-              View Demo
-            </button>
           </div>
         </div>
 
@@ -409,13 +423,7 @@ export default function Home() {
           <div className="w-full flex flex-col gap-3">
             {activeTab === "session" ? (
               downloads.length > 0 ? (
-                downloads.map((d) => (
-                  <SessionRow
-                    key={d.id}
-                    download={d}
-                    onDownload={() => handleDownload(d)}
-                  />
-                ))
+                downloads.map((d) => <SessionRow key={d.id} download={d} />)
               ) : (
                 <div className="py-16 text-center text-xs text-neutral-600 font-medium tracking-wide border border-dashed border-white/[0.03] rounded-xl bg-white/[0.01]">
                   Operational logs queue is empty. Awaiting links injection
@@ -499,7 +507,7 @@ export default function Home() {
   );
 }
 
-function SessionRow({ download, onDownload }) {
+function SessionRow({ download }) {
   const isDone = download.status === "done";
   const isFailed = download.status === "failed";
   const isDownloading = download.status === "downloading";
@@ -535,12 +543,9 @@ function SessionRow({ download, onDownload }) {
 
       <div className="flex items-center sm:ml-4 self-end sm:self-auto flex-shrink-0">
         {isDone && (
-          <button
-            onClick={onDownload}
-            className="rounded-lg bg-white text-neutral-950 px-4 py-2 text-xs font-bold hover:bg-neutral-200 active:scale-[0.98] transition-all shadow-xl shadow-white/5 border border-white/20"
-          >
-            Ready to Download
-          </button>
+          <span className="rounded-lg bg-emerald-500/10 text-emerald-400 px-4 py-2 text-xs font-bold border border-emerald-500/20">
+            ✓ Saved to Downloads
+          </span>
         )}
 
         {isDownloading && (

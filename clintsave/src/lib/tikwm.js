@@ -8,10 +8,9 @@ const USER_AGENTS = [
 
 async function fetchWithRotation(url, options = {}, retryCount = 0) {
   const MAX_RETRIES = 3;
-
   if (retryCount >= MAX_RETRIES) {
     throw new Error(
-      `TikWM API rate limits exhausted after ${MAX_RETRIES} processing attempts.`,
+      `TikWM API rate limits exhausted after ${MAX_RETRIES} attempts.`,
     );
   }
 
@@ -45,13 +44,15 @@ async function fetchWithRotation(url, options = {}, retryCount = 0) {
 }
 
 export async function getTikTokVideoInfo(tiktokUrl) {
-  const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(tiktokUrl)}`;
-  const response = await fetchWithRotation(apiUrl);
+  // POST is more reliable than GET for tikwm
+  const response = await fetchWithRotation("https://www.tikwm.com/api/", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ url: tiktokUrl, hd: "1" }),
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `External API returned bad status context: ${response.status}`,
-    );
+    throw new Error(`TikWM API returned status ${response.status}`);
   }
 
   return await response.json();
@@ -59,20 +60,22 @@ export async function getTikTokVideoInfo(tiktokUrl) {
 
 export function extractVideoUrl(response) {
   if (response.code === 0 && response.data) {
+    // play = no-watermark, hdplay = HD no-watermark, wmplay = with watermark
     return response.data.play || response.data.hdplay || null;
   }
   return null;
 }
 
 export function extractMetadata(response) {
-  if (!response.data) return null;
+  if (!response.data) return {};
+  const d = response.data;
+
   return {
-    title: response.data.title,
-    creatorName: response.data.author?.nickname,
-    thumbnailUrl: response.data.origin_cover?.url_list?.[0],
-    duration: response.data.duration,
-    music: response.data.music_info?.title,
-    musicAuthor: response.data.music_info?.author,
-    size: response.data.size || response.data.wm_size || null,
+    title: d.title || "TikTok Video",
+    creatorName: d.author?.nickname || d.author?.unique_id || "Unknown",
+    // tikwm returns cover/origin_cover as plain strings, not objects
+    thumbnailUrl: d.origin_cover || d.cover || null,
+    duration: d.duration || null,
+    size: d.size || d.wm_size || null,
   };
 }

@@ -10,7 +10,7 @@ export function isValidTikTokUrl(url) {
 
 export function parseUrls(text) {
   return text
-    .split(/[\s,]+/) // Fixed: now handles spaces, tabs, and newlines properly
+    .split(/[\s,\n]+/)
     .map((url) => url.trim())
     .filter((url) => url.length > 0 && isValidTikTokUrl(url));
 }

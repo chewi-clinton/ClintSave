@@ -7,39 +7,37 @@ export async function GET(request) {
 
   if (!url) {
     return NextResponse.json(
-      { error: "Missing target source URL parameters" },
+      { error: "Missing URL parameter" },
       { status: 400 },
     );
   }
 
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error("Target video resource could not be fetched");
-    }
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        Referer: "https://www.tiktok.com/",
+      },
+    });
+
+    if (!response.ok) throw new Error(`Source returned ${response.status}`);
 
     const contentType = response.headers.get("content-type") || "video/mp4";
     const contentLength = response.headers.get("content-length");
-
-    const fallbackFilename = filename.replace(/[^\x00-\x7F]/g, "");
-    const extendedFilename = encodeURIComponent(filename);
+    const safeFilename = filename.replace(/[^\x00-\x7F]/g, "");
+    const encodedFilename = encodeURIComponent(filename);
 
     const headers = new Headers();
     headers.set("Content-Type", contentType);
     headers.set(
       "Content-Disposition",
-      `attachment; filename="${fallbackFilename || "video.mp4"}"; filename*=UTF-8''${extendedFilename}`,
+      `attachment; filename="${safeFilename || "video.mp4"}"; filename*=UTF-8''${encodedFilename}`,
     );
-    headers.set("Cache-Control", "public, max-age=3600");
+    headers.set("Cache-Control", "no-store");
+    if (contentLength) headers.set("Content-Length", contentLength);
 
-    if (contentLength) {
-      headers.set("Content-Length", contentLength);
-    }
-
-    return new NextResponse(response.body, {
-      status: 200,
-      headers,
-    });
+    return new NextResponse(response.body, { status: 200, headers });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

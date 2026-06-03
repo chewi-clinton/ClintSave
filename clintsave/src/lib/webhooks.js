@@ -1,6 +1,5 @@
 export async function sendWebhookNotification(webhookUrl, payload) {
   if (!webhookUrl) return;
-
   try {
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -10,19 +9,15 @@ export async function sendWebhookNotification(webhookUrl, payload) {
       },
       body: JSON.stringify(payload),
     });
-
-    if (!response.ok) {
+    if (!response.ok)
       console.error("Webhook delivery failed:", response.status);
-    }
   } catch (error) {
     console.error("Webhook error:", error.message);
   }
 }
 
 export async function notifyBatchComplete(sessionId, results) {
-  // Get webhook URL from environment or from first download record
   const webhookUrl = process.env.WEBHOOK_URL;
-
   if (!webhookUrl) return;
 
   const successful = results.filter((r) => r.status === "done").length;
