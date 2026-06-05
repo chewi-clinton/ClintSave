@@ -56,7 +56,7 @@ export default function Dashboard() {
     <main className="w-full min-h-screen text-neutral-200 antialiased">
       <Navbar />
 
-      <div className="w-full max-w-4xl mx-auto px-8 pt-12 pb-28">
+      <section className="w-full max-w-4xl mx-auto px-8 pt-12 pb-28">
         <div className="mb-10">
           <h1 className="text-3xl font-extrabold text-white tracking-tight">Analytics</h1>
           <p className="text-neutral-500 text-sm mt-1">Download stats and history.</p>
@@ -116,7 +116,7 @@ export default function Dashboard() {
             </table>
           </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

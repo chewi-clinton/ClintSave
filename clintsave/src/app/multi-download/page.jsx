@@ -77,7 +77,7 @@ export default function AllowDownloads() {
     <main className="w-full min-h-screen text-neutral-200 antialiased">
       <Navbar />
 
-      <div className="w-full max-w-lg mx-auto px-8 pt-12 pb-28">
+      <section className="w-full max-w-lg mx-auto px-8 pt-12 pb-28">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-extrabold text-white mb-3 tracking-tight">Allow Multiple Downloads</h1>
           <p className="text-neutral-400 text-sm leading-relaxed">
@@ -108,12 +108,12 @@ export default function AllowDownloads() {
 
         <button
           onClick={() => window.history.back()}
-          className="btn-primary w-full justify-center py-4 bg-purple-600 hover:bg-purple-500 text-sm"
+          className="btn-primary w-full justify-center"
         >
           <ArrowLeftIcon />
           Done — Go Back
         </button>
-      </div>
+      </section>
     </main>
   );
 }

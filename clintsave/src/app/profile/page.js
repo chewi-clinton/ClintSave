@@ -95,7 +95,7 @@ export default function ProfilePage() {
     <main className="w-full min-h-screen text-neutral-200 antialiased">
       <Navbar />
 
-      <div className="w-full max-w-3xl mx-auto px-8 pt-12 pb-28">
+      <section className="w-full max-w-3xl mx-auto px-8 pt-12 pb-28">
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Profile Bulk Download</h1>
           <p className="text-neutral-400 text-sm max-w-lg mx-auto leading-relaxed">
@@ -114,7 +114,7 @@ export default function ProfilePage() {
           <button
             onClick={fetchProfile}
             disabled={profileLoading}
-            className="btn-primary px-7 py-3.5 bg-purple-600 hover:bg-purple-500 text-sm disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
             {profileLoading ? "Fetching..." : "Fetch Videos"}
           </button>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
                 <button
                   onClick={downloadAllProfileVideos}
                   disabled={bulkDownloading}
-                  className="btn-primary px-5 py-2.5 bg-teal-600 hover:bg-teal-500 text-sm disabled:opacity-40 shadow-[0_3px_0_0_#0f766e,0_6px_12px_rgba(0,0,0,0.3)]"
+                  className="btn-teal disabled:opacity-40"
                 >
                   {bulkDownloading
                     ? <><SpinnerIcon className="w-3.5 h-3.5 animate-spin" /> Downloading...</>
@@ -206,7 +206,7 @@ export default function ProfilePage() {
             Enter a TikTok username above and click Fetch Videos
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }

@@ -81,7 +81,7 @@ export default function HelpPage() {
     <main className="w-full min-h-screen text-neutral-200 antialiased">
       <Navbar />
 
-      <div className="w-full max-w-3xl mx-auto px-8 pt-12 pb-28">
+      <section className="w-full max-w-3xl mx-auto px-8 pt-12 pb-28">
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Help & Setup</h1>
           <p className="text-neutral-400 text-sm max-w-lg mx-auto leading-relaxed">
@@ -156,7 +156,7 @@ export default function HelpPage() {
             ))}
           </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

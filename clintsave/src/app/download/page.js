@@ -132,7 +132,7 @@ export default function DownloadPage() {
     <main className="w-full min-h-screen text-neutral-200 antialiased">
       <Navbar />
 
-      <div className="w-full max-w-3xl mx-auto px-8 pt-12 pb-28">
+      <section className="w-full max-w-3xl mx-auto px-8 pt-12 pb-28">
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Batch Downloader</h1>
           <p className="text-neutral-400 text-sm max-w-lg mx-auto leading-relaxed">
@@ -160,7 +160,7 @@ export default function DownloadPage() {
           <button
             onClick={handleSubmit}
             disabled={isProcessing}
-            className="btn-primary px-9 py-3.5 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-900/50 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing
               ? <><SpinnerIcon className="w-4 h-4 animate-spin" /> Processing...</>
@@ -231,7 +231,7 @@ export default function DownloadPage() {
             </div>
           )}
         </div>
-      </div>
+      </section>
     </main>
   );
 }
