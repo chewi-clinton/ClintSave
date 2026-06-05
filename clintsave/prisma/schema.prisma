@@ -8,20 +8,20 @@ datasource db {
 }
 
 model Download {
-  id                  Int       @id @default(autoincrement())
-  tiktokUrl           String    @map("tiktok_url")
-  videoTitle          String?   @map("video_title")
-  creatorName         String?   @map("creator_name")
-  thumbnailUrl        String?   @map("thumbnail_url")
-  videoUrlNoWatermark String?   @map("video_url_no_watermark")
-  status              String    @default("pending")
-  errorMessage        String?   @map("error_message")
-  fileSize            BigInt?   @map("file_size")
+  id                  Int      @id @default(autoincrement())
+  tiktokUrl           String   @map("tiktok_url")
+  videoTitle          String?  @map("video_title")
+  creatorName         String?  @map("creator_name")
+  thumbnailUrl        String?  @map("thumbnail_url")
+  videoUrlNoWatermark String?  @map("video_url_no_watermark")
+  status              String   @default("pending")
+  errorMessage        String?  @map("error_message")
+  fileSize            BigInt?  @map("file_size")
   duration            Int?
-  sessionId           String?   @map("session_id")
-  webhookCallback     String?   @map("webhook_callback")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  sessionId           String?  @map("session_id")
+  webhookCallback     String?  @map("webhook_callback")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([sessionId])
