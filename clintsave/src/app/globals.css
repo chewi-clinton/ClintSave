@@ -1,19 +1,13 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 @theme {
-  /* Set Inter as your standard UI text font */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  /* Reserve Syne strictly for stylized headings */
-  --font-display: "Syne", sans-serif;
-  /* Crisp developer font for URLs and codes */
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 :root {
   color-scheme: dark;
-  background-color: #0a0510;
-  color: #e5e7eb;
 }
 
 * {
@@ -22,27 +16,134 @@
   padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   min-height: 100vh;
   background-color: #0a0510;
-  color: #e5e7eb;
+  color: #f3f4f6;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-button,
-input,
-textarea,
-select {
+button, input, textarea {
   font-family: inherit;
 }
 
-::selection {
-  background: rgba(124, 58, 237, 0.3); /* Purple selection tint */
-  color: #ffffff;
+/* ─── 1. Primary Button ──────────────────────────────────────────────────── */
+
+/* Shared base for all action buttons */
+.btn-primary,
+.btn-secondary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px 24px !important;
+  width: auto !important;
+  min-width: 160px !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  transition: all 0.1s ease !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  gap: 0.5rem !important;
+}
+
+/* Purple primary — Start Downloading, Try it Now, Get Started */
+.btn-primary {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 0 0 #6b21a8, 0 8px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.btn-primary:hover {
+  background-color: #a855f7 !important;
+}
+
+.btn-primary:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 0 #6b21a8, 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Ghost secondary — How it Works */
+.btn-secondary {
+  background-color: transparent !important;
+  color: #e5e7eb !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 0 0 rgba(255, 255, 255, 0.06), 0 8px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.btn-secondary:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 2px 0 0 rgba(255, 255, 255, 0.06), 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ─── 2. Layout & Section Spacing ────────────────────────────────────────── */
+
+main > section {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 5rem !important;
+  margin-bottom: 5rem !important;
+  display: block !important;
+}
+
+/* Hero sits directly under the navbar — no extra top margin */
+main > section:first-of-type {
+  margin-top: 0 !important;
+}
+
+/* ─── 3. Navigation Full Width ───────────────────────────────────────────── */
+
+nav {
+  width: 100% !important;
+  padding: 0 2rem !important;
+}
+
+nav > div {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* ─── 4. Step Cards (How it Works) ───────────────────────────────────────── */
+
+.step-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  padding: 2rem !important;
+  margin-bottom: 1.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.step-number {
+  font-size: 3rem !important;
+  font-weight: 900 !important;
+  color: #9333ea !important;
+  opacity: 0.5 !important;
+  min-width: 80px !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+/* ─── 5. Nav & Footer Link Reset ─────────────────────────────────────────── */
+/* Prevents plain text links from inheriting button styles */
+
+nav a:not(.btn-primary):not(.btn-secondary),
+footer a {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  min-width: 0 !important;
+  text-transform: none !important;
 }
