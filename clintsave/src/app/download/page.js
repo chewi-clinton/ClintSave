@@ -91,8 +91,15 @@ export default function DownloadPage() {
   }
 
   const handleSubmit = useCallback(async () => {
-    const urls = inputValue.split(/[\s,\n]+/).map((u) => u.trim()).filter((u) => u.length > 0 && (u.includes("tiktok.com") || u.includes("vm.tiktok.com")));
-    if (urls.length === 0) return alert("Please enter valid TikTok URLs");
+    const urls = inputValue.split(/[\s,\n]+/).map((u) => u.trim()).filter((u) => {
+      const l = u.toLowerCase();
+      return u.length > 0 && (
+        l.includes("tiktok.com") || l.includes("vm.tiktok.com") ||
+        l.includes("instagram.com") ||
+        l.includes("facebook.com") || l.includes("fb.watch") || l.includes("fb.com")
+      );
+    });
+    if (urls.length === 0) return alert("Please enter valid TikTok, Instagram, or Facebook URLs");
     setIsProcessing(true);
     autoDownloadedIds.current = new Set();
     downloadQueue.current = [];
@@ -101,7 +108,7 @@ export default function DownloadPage() {
       const response = await fetch("/api/batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to start downloads");
-      const initialDownloads = urls.map((url, index) => ({ id: data.downloadIds[index], tiktokUrl: url, status: "pending", createdAt: new Date().toISOString() }));
+      const initialDownloads = urls.map((url, index) => ({ id: data.downloadIds[index], sourceUrl: url, status: "pending", createdAt: new Date().toISOString() }));
       setDownloads((prev) => [...initialDownloads, ...prev]);
       setInputValue("");
       startPolling(data.sessionId);
@@ -136,7 +143,7 @@ export default function DownloadPage() {
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Batch Downloader</h1>
           <p className="text-neutral-400 text-sm max-w-lg mx-auto leading-relaxed">
-            Paste one or more TikTok video URLs below. Videos download automatically one by one.
+            Paste TikTok, Instagram, or Facebook video URLs. Downloads happen automatically one by one.
           </p>
         </div>
 
@@ -144,7 +151,7 @@ export default function DownloadPage() {
           <textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Paste video URLs here... (one per line or separated by spaces)"
+            placeholder="Paste TikTok, Instagram, or Facebook URLs... (one per line or space-separated)"
             rows={5}
             className="w-full px-5 py-4 bg-white/3 border border-white/8 rounded-2xl text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-purple-500/50 transition-all resize-none"
             disabled={isProcessing}
@@ -216,7 +223,7 @@ export default function DownloadPage() {
                   {downloads.length > 0 ? downloads.map((d) => (
                     <tr key={d.id} className="hover:bg-white/2 transition-colors">
                       <td className="px-5 py-4 text-white max-w-50 truncate">{d.videoTitle || "—"}</td>
-                      <td className="px-5 py-4 font-mono text-[10px] text-neutral-500 max-w-75 truncate">{d.tiktokUrl}</td>
+                      <td className="px-5 py-4 font-mono text-[10px] text-neutral-500 max-w-75 truncate">{d.sourceUrl}</td>
                       <td className="px-5 py-4 whitespace-nowrap">{formatDate(d.createdAt)}</td>
                     </tr>
                   )) : (
@@ -248,7 +255,7 @@ function SessionRow({ download }) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-white">{download.videoTitle || "Fetching..."}</p>
-          <p className="mt-0.5 truncate text-[11px] font-mono text-neutral-500 max-w-xs">{download.tiktokUrl}</p>
+          <p className="mt-0.5 truncate text-[11px] font-mono text-neutral-500 max-w-xs">{download.sourceUrl}</p>
         </div>
       </div>
 

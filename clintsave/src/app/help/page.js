@@ -125,8 +125,8 @@ export default function HelpPage() {
           <h2 className="text-lg font-extrabold text-white mb-6">How to Use ClintSave</h2>
           <div className="flex flex-col gap-4">
             {[
-              { title: "Batch Downloader", href: "/download", desc: "Copy TikTok video URLs and paste them into the input box — one per line or space-separated. Hit Start Download and videos will save to your device automatically." },
-              { title: "Profile Bulk Download", href: "/profile", desc: "Go to the Profile page, enter a TikTok username (with or without the @), and click Fetch Videos. Once loaded you can download all or save individual ones." },
+              { title: "Batch Downloader", href: "/download", desc: "Paste TikTok, Instagram, or Facebook video URLs into the input box — one per line or space-separated. Hit Start Download and videos save to your device automatically." },
+              { title: "Profile Bulk Download", href: "/profile", desc: "Go to the Profile page, select TikTok or Instagram, enter a username (with or without @), and click Fetch Videos. Download all or save individual ones." },
             ].map((item) => (
               <div key={item.title} className="p-5 rounded-2xl bg-white/3 border border-white/6">
                 <div className="flex items-center justify-between mb-2">

@@ -43,9 +43,9 @@ const ArrowRightIcon = () => (
 );
 
 const features = [
-  { Icon: LightningIcon, title: "Batch Download", desc: "Paste hundreds of links at once and download them all automatically." },
+  { Icon: LightningIcon, title: "Batch Download", desc: "Paste TikTok, Instagram, or Facebook links and download them all automatically." },
   { Icon: HdIcon, title: "HD No Watermark", desc: "Get the highest quality version of every video, completely watermark free." },
-  { Icon: VideoFileIcon, title: "Profile Bulk", desc: "Enter any username and bulk download all their videos at once." },
+  { Icon: VideoFileIcon, title: "Profile Bulk", desc: "Enter a TikTok or Instagram username and bulk download their videos at once." },
   { Icon: MusicIcon, title: "Fast Processing", desc: "Videos are fetched and queued instantly with live status updates." },
 ];
 
@@ -71,12 +71,12 @@ export default function Landing() {
         </div>
 
         <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-5 tracking-tight leading-[1.1]">
-          Download TikTok Videos{" "}
+          Download Videos{" "}
           <span className="text-purple-400">Without Watermark</span>
         </h1>
 
         <p className="text-neutral-400 text-lg max-w-xl mx-auto leading-relaxed mb-10">
-          Paste one link or hundreds. ClintSave fetches, queues, and saves every video to your device automatically.
+          TikTok, Instagram, and Facebook. Paste one link or hundreds — ClintSave fetches, queues, and saves every video automatically.
         </p>
 
         <div className="flex items-center justify-center gap-4 flex-wrap">

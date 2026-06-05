@@ -101,7 +101,7 @@ export default function Dashboard() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="text-white max-w-xs truncate text-sm">{h.videoTitle || "—"}</div>
-                      <div className="text-[10px] text-neutral-500 truncate max-w-xs mt-0.5">{h.tiktokUrl}</div>
+                      <div className="text-[10px] text-neutral-500 truncate max-w-xs mt-0.5">{h.sourceUrl}</div>
                     </td>
                     <td className="px-5 py-4 text-right text-neutral-500 whitespace-nowrap">
                       {new Date(h.createdAt).toLocaleDateString()}

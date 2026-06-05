@@ -49,7 +49,13 @@ async function runSequential(tasks, delayMs = 1200) {
   }
 }
 
+const PLATFORMS = [
+  { id: "tiktok", label: "TikTok" },
+  { id: "instagram", label: "Instagram" },
+];
+
 export default function ProfilePage() {
+  const [platform, setPlatform] = useState("tiktok");
   const [profileInput, setProfileInput] = useState("");
   const [profileVideos, setProfileVideos] = useState([]);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -65,7 +71,11 @@ export default function ProfilePage() {
     setProfileAuthor(null);
     setError("");
     try {
-      const res = await fetch("/api/profile", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: profileInput.trim() }) });
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: profileInput.trim(), platform }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
       setProfileVideos(data.videos || []);
@@ -99,8 +109,21 @@ export default function ProfilePage() {
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Profile Bulk Download</h1>
           <p className="text-neutral-400 text-sm max-w-lg mx-auto leading-relaxed">
-            Enter a TikTok username to load and bulk download their latest videos without watermark.
+            Enter a TikTok or Instagram username to load and bulk download their latest videos.
           </p>
+        </div>
+
+        {/* Platform selector */}
+        <div className="flex gap-3 mb-5">
+          {PLATFORMS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => { setPlatform(p.id); setProfileVideos([]); setProfileAuthor(null); setError(""); }}
+              className={platform === p.id ? "btn-primary btn-sm" : "btn-secondary btn-sm"}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
 
         <div className="flex gap-3 mb-6">
@@ -108,7 +131,7 @@ export default function ProfilePage() {
             value={profileInput}
             onChange={(e) => setProfileInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && fetchProfile()}
-            placeholder="@yourusername"
+            placeholder={platform === "instagram" ? "@instausername" : "@tiktokusername"}
             className="flex-1 px-5 py-3.5 bg-white/3 border border-white/8 rounded-2xl text-sm text-neutral-200 placeholder:text-neutral-600 outline-none focus:border-purple-500/50 transition-all"
           />
           <button
