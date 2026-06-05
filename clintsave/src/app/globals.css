@@ -83,6 +83,14 @@ button, input, textarea {
   box-shadow: 0 2px 0 0 #0f766e, 0 4px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
+/* Small modifier — use alongside btn-primary / btn-secondary / btn-teal */
+.btn-sm {
+  padding: 8px 16px !important;
+  min-width: 0 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.04em !important;
+}
+
 /* Ghost secondary — How it Works */
 .btn-secondary {
   background-color: transparent !important;

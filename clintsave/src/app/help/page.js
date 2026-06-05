@@ -131,7 +131,7 @@ export default function HelpPage() {
               <div key={item.title} className="p-5 rounded-2xl bg-white/3 border border-white/6">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-bold text-white">{item.title}</p>
-                  <Link href={item.href} className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+                  <Link href={item.href} className="btn-primary btn-sm">
                     Open <ArrowIcon />
                   </Link>
                 </div>

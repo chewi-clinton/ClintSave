@@ -181,16 +181,12 @@ export default function DownloadPage() {
           </div>
         )}
 
-        <div className="flex gap-2 mb-5 mt-7">
+        <div className="flex gap-3 mb-5 mt-7">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
-                activeTab === tab.id
-                  ? "bg-purple-600 text-white border-purple-500"
-                  : "bg-white/3 text-neutral-400 border-white/7 hover:bg-white/6 hover:text-neutral-200"
-              }`}
+              className={activeTab === tab.id ? "btn-primary btn-sm" : "btn-secondary btn-sm"}
             >
               {tab.label}
             </button>
