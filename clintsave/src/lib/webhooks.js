@@ -35,7 +35,7 @@ export async function notifyBatchComplete(sessionId, results) {
     },
     downloads: results.map((r) => ({
       id: r.id,
-      url: r.tiktokUrl,
+      url: r.sourceUrl,
       title: r.videoTitle,
       status: r.status,
       creator: r.creatorName,
