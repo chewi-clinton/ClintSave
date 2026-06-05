@@ -9,7 +9,7 @@ datasource db {
 
 model Download {
   id                  Int      @id @default(autoincrement())
-  tiktokUrl           String   @map("tiktok_url")
+  sourceUrl           String   @map("source_url")
   videoTitle          String?  @map("video_title")
   creatorName         String?  @map("creator_name")
   thumbnailUrl        String?  @map("thumbnail_url")
