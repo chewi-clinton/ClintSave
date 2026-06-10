@@ -9,18 +9,26 @@ export async function GET(request) {
     return NextResponse.json({ error: "Missing URL parameter" }, { status: 400 });
   }
 
+  const referer = url.includes("tiktok") || url.includes("tiktokcdn")
+    ? "https://www.tiktok.com/"
+    : url.includes("instagram") || url.includes("cdninstagram")
+    ? "https://www.instagram.com/"
+    : url.includes("facebook") || url.includes("fbcdn")
+    ? "https://www.facebook.com/"
+    : "https://www.google.com/";
+
   try {
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-        Referer: "https://www.tiktok.com/",
+        Referer: referer,
         Range: "bytes=0-",
       },
     });
 
     if (!response.ok) throw new Error(`Source returned ${response.status}`);
 
-    const contentType = response.headers.get("content-type") || "video/mp4";
+    const contentType = response.headers.get("content-type") || "application/octet-stream";
     const contentLength = response.headers.get("content-length");
     const safeFilename = filename.replace(/[^\x00-\x7F]/g, "") || "video.mp4";
     const encodedFilename = encodeURIComponent(filename);
