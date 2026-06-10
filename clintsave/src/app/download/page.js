@@ -84,9 +84,23 @@ export default function DownloadPage() {
     if (!download.videoUrlNoWatermark) return;
     if (autoDownloadedIds.current.has(download.id)) return;
     autoDownloadedIds.current.add(download.id);
-    const filename = `${(download.creatorName || "tiktok").replace(/[^a-z0-9\-_]/gi, "_")}-${download.id}`;
-    const proxyUrl = `/api/download?url=${encodeURIComponent(download.videoUrlNoWatermark)}&filename=${encodeURIComponent(filename)}`;
-    downloadQueue.current.push({ proxyUrl, filename: `${filename}.mp4` });
+
+    let mediaUrls;
+    try {
+      const parsed = JSON.parse(download.videoUrlNoWatermark);
+      mediaUrls = Array.isArray(parsed) ? parsed : [download.videoUrlNoWatermark];
+    } catch {
+      mediaUrls = [download.videoUrlNoWatermark];
+    }
+
+    const baseName = (download.creatorName || "media").replace(/[^a-z0-9\-_]/gi, "_");
+    mediaUrls.forEach((url, i) => {
+      const suffix = mediaUrls.length > 1 ? `-${i + 1}` : "";
+      const ext = /\.(jpe?g|png|webp|gif)(\?|$)/i.test(url) ? ".jpg" : ".mp4";
+      const filename = `${baseName}-${download.id}${suffix}${ext}`;
+      const proxyUrl = `/api/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+      downloadQueue.current.push({ proxyUrl, filename });
+    });
     processDownloadQueue();
   }
 
@@ -244,14 +258,27 @@ function SessionRow({ download }) {
   const isFailed = download.status === "failed";
   const isProcessing = ["pending", "fetching"].includes(download.status);
 
+  let mediaCount = 1;
+  if (download.videoUrlNoWatermark) {
+    try {
+      const parsed = JSON.parse(download.videoUrlNoWatermark);
+      if (Array.isArray(parsed)) mediaCount = parsed.length;
+    } catch {}
+  }
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-white/3 border border-white/6 p-4 gap-3 hover:bg-white/5 transition-colors">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/4 border border-white/6 overflow-hidden">
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/4 border border-white/6 overflow-hidden">
           {download.thumbnailUrl
             ? <img src={download.thumbnailUrl} alt="" className="h-full w-full object-cover" />
             : <VideoFileIcon />
           }
+          {mediaCount > 1 && (
+            <span className="absolute bottom-0 right-0 bg-black/70 text-white text-[9px] font-bold px-1 rounded-tl">
+              {mediaCount}
+            </span>
+          )}
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-white">{download.videoTitle || "Fetching..."}</p>
