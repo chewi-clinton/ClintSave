@@ -24,22 +24,23 @@ export async function getCobaltVideoInfo(url) {
   return await res.json();
 }
 
-export function extractCobaltUrl(data) {
+export function extractCobaltMedia(data) {
   if (data.status === "redirect" || data.status === "tunnel") {
-    return data.url || null;
+    return { urls: data.url ? [data.url] : [], thumbnailUrl: null };
   }
   if (data.status === "picker" && data.picker?.length > 0) {
-    const video = data.picker.find((p) => p.type === "video");
-    return video?.url || data.picker[0]?.url || null;
+    const urls = data.picker.map((p) => p.url).filter(Boolean);
+    const thumbnailUrl = data.picker[0]?.thumb || null;
+    return { urls, thumbnailUrl };
   }
-  return null;
+  return { urls: [], thumbnailUrl: null };
 }
 
-export function buildCobaltMetadata(platform) {
+export function buildCobaltMetadata(platform, thumbnailUrl = null) {
   return {
-    title: platform === "instagram" ? "Instagram Video" : "Facebook Video",
+    title: platform === "instagram" ? "Instagram Media" : "Facebook Media",
     creatorName: null,
-    thumbnailUrl: null,
+    thumbnailUrl,
     duration: null,
     size: null,
   };
