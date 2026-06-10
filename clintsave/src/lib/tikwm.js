@@ -60,10 +60,20 @@ export async function getTikTokVideoInfo(tiktokUrl) {
 
 export function extractVideoUrl(response) {
   if (response.code === 0 && response.data) {
+    if (response.data.images?.length > 0) return null; // slideshow post
     // play = no-watermark, hdplay = HD no-watermark, wmplay = with watermark
     return response.data.play || response.data.hdplay || null;
   }
   return null;
+}
+
+export function extractImageUrls(response) {
+  if (response.code === 0 && response.data?.images?.length > 0) {
+    return response.data.images.map((img) =>
+      typeof img === "string" ? img : img.url || img.display_image?.url_list?.[0] || null
+    ).filter(Boolean);
+  }
+  return [];
 }
 
 export function extractMetadata(response) {
