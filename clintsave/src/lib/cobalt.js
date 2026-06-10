@@ -1,12 +1,21 @@
 // Cobalt.tools API wrapper — handles Instagram posts/reels and Facebook videos/reels
 
+const COBALT_API_URL = process.env.COBALT_API_URL || "https://api.cobalt.tools/";
+const COBALT_API_KEY = process.env.COBALT_API_KEY;
+
 export async function getCobaltVideoInfo(url) {
-  const res = await fetch("https://api.cobalt.tools/", {
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+
+  if (COBALT_API_KEY) {
+    headers["Authorization"] = `Api-Key ${COBALT_API_KEY}`;
+  }
+
+  const res = await fetch(COBALT_API_URL, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       url,
       videoQuality: "max",
