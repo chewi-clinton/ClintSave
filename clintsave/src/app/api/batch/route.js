@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getTikTokVideoInfo, extractVideoUrl, extractMetadata } from "@/lib/tikwm";
-import { getCobaltVideoInfo, extractCobaltUrl, buildCobaltMetadata } from "@/lib/cobalt";
+import { getTikTokVideoInfo, extractVideoUrl, extractImageUrls, extractMetadata } from "@/lib/tikwm";
+import { getCobaltVideoInfo, extractCobaltMedia, buildCobaltMetadata } from "@/lib/cobalt";
 import { prisma } from "@/lib/db";
 import { generateSessionId, parseUrls, detectPlatform } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
@@ -90,20 +90,30 @@ async function processVideo(id, url) {
   try {
     let videoUrl, metadata;
 
+    let mediaUrls = [];
+
     if (platform === "tiktok") {
       const response = await getTikTokVideoInfo(url);
       if (response.code !== 0 || !response.data) {
         throw new Error(response.msg || "Failed to fetch TikTok video info");
       }
-      videoUrl = extractVideoUrl(response);
+      const imageUrls = extractImageUrls(response);
+      if (imageUrls.length > 0) {
+        mediaUrls = imageUrls;
+      } else {
+        videoUrl = extractVideoUrl(response);
+        if (videoUrl) mediaUrls = [videoUrl];
+      }
       metadata = extractMetadata(response);
     } else {
       const response = await getCobaltVideoInfo(url);
-      videoUrl = extractCobaltUrl(response);
-      metadata = buildCobaltMetadata(platform);
+      const { urls, thumbnailUrl } = extractCobaltMedia(response);
+      mediaUrls = urls;
+      metadata = buildCobaltMetadata(platform, thumbnailUrl);
     }
 
-    if (!videoUrl) throw new Error("No downloadable video URL found");
+    if (mediaUrls.length === 0) throw new Error("No downloadable media found");
+    videoUrl = mediaUrls.length === 1 ? mediaUrls[0] : JSON.stringify(mediaUrls);
 
     await prisma.download.update({
       where: { id },
