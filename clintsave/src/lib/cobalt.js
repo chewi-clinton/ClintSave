@@ -10,7 +10,7 @@ export async function getCobaltVideoInfo(url) {
     body: JSON.stringify({
       url,
       videoQuality: "max",
-      downloadMode: "video",
+      downloadMode: "auto",
       filenameStyle: "classic",
     }),
     signal: AbortSignal.timeout(30000),
